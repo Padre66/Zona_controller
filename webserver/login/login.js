@@ -4,10 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const passwordInput = document.getElementById("password");
     const togglePassword = document.getElementById("togglePassword");
 
-    togglePassword.addEventListener("click", () => {
-        const isPassword = passwordInput.type === "password";
-        passwordInput.type = isPassword ? "text" : "password";
-    });
+    if (togglePassword) {
+        togglePassword.addEventListener("click", () => {
+            const isPassword = passwordInput.type === "password";
+            passwordInput.type = isPassword ? "text" : "password";
+        });
+    }
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -27,23 +29,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const data = await response.json();
-
             if (!data.success) {
                 errorMessage.style.display = "block";
                 return;
             }
 
             const role = data.role;
-
-            if (role === "Diag") {
-                window.location.href = "/webserver/User/index.html";
-            } else if (role === "Admin") {
-                window.location.href = "/webserver/Admin/index.html";
-            } else if (role === "Superuser") {
-                window.location.href = "/webserver/Superuser/index.html";
-            } else {
-                errorMessage.style.display = "block";
-            }
+            if (role === "Diag") window.location.href = "/webserver/User/index.html";
+            if (role === "Admin") window.location.href = "/webserver/Admin/index.html";
+            if (role === "Superuser") window.location.href = "/webserver/Superuser/index.html";
 
         } catch (err) {
             console.error(err);
