@@ -2,23 +2,49 @@
 <html lang="hu">
 <head>
     <meta charset="utf-8">
-    <title>Login - TDoA Zone Controller</title>
+    <title>Belépés - TDoA Zone Controller</title>
     <link rel="stylesheet" href="{{ url_for('static_files', filename='css/theme.css') }}">
 </head>
 <body class="login-body">
 <div class="login-box">
-    <h1>Login</h1>
+    <h1>Belépés</h1>
+    <p class="login-subtitle">
+        TDoA IPS zóna vezérlő · jelentkezz be a folytatáshoz.
+    </p>
+
     <div class="form-row">
         <label for="username">Felhasználónév</label>
-        <input id="username" type="text">
+        <input id="username" type="text" autocomplete="username">
     </div>
     <div class="form-row">
         <label for="password">Jelszó</label>
-        <input id="password" type="password">
+        <input id="password" type="password" autocomplete="current-password">
     </div>
+
     <button id="login-btn" class="btn-primary">Bejelentkezés</button>
     <div id="login-error" class="error-msg"></div>
+
+    <!-- opcionális: egy kis státuszblokk a login panel alján, mint a képen -->
+    <!-- -->
+    <table class="login-meta-table">
+        <thead>
+        <tr>
+            <th>Anchor</th>
+            <th>Utolsó módosítás [s]</th>
+            <th>Feszültség [V]</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>A1</td>
+            <td>0.20</td>
+            <td>6.80</td>
+        </tr>
+        </tbody>
+    </table>
+    <!-- -->
 </div>
+
 <script src="{{ url_for('static_files', filename='js/login.js') }}"></script>
 </body>
 </html>
