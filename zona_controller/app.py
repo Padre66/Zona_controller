@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 from flask import Flask, send_from_directory, render_template, redirect, url_for
 from flask_session import Session
@@ -24,8 +25,14 @@ def create_app(config_path: str = "zona.conf"):
     Session(app)
 
     state = State()
-    udp_server = UDPServer(config_path, state)
-    udp_server.start()
+
+    # Csak a "fő" processzben indítjuk el a UDP szervert:
+    # - debug=False esetén egyszer indul (pl. Debian / production)
+    # - debug=True esetén csak akkor, ha WERKZEUG_RUN_MAIN == "true"
+    is_reloader_child = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+    if not app.debug or is_reloader_child:
+        udp_server = UDPServer(config_path, state)
+        udp_server.start()
 
     app.register_blueprint(auth_bp)
     api_bp = create_api_blueprint(state, config_path)

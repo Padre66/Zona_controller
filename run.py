@@ -10,4 +10,5 @@ if __name__ == "__main__":
     port = int(net.get("http_port", 51200))
 
     app = create_app("zona.conf")
-    app.run(host=host, port=port, debug=True)
+    # FONTOS: use_reloader=False, így csak EGY processz indul
+    app.run(host=host, port=port, debug=True, use_reloader=False)
