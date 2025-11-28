@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="hu">
+<head>
+    <meta charset="utf-8">
+    <title>TDoA Zone Controller</title>
+    <link rel="stylesheet" href="{{ url_for('static_files', filename='css/theme.css') }}">
+</head>
+<body>
+<header class="app-header">
+    <div class="app-title">TDoA Zone Controller</div>
+    <nav class="app-nav">
+        <a href="{{ url_for('index') }}">Dashboard</a>
+        <a href="{{ url_for('map_page') }}">Map</a>
+        <a href="{{ url_for('config_page') }}">Config</a>
+    </nav>
+</header>
+<main class="app-main">
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

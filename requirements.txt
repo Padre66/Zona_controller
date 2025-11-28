@@ -1,5 +1,5 @@
-fastapi==0.110.0
-uvicorn[standard]==0.23.2
-python-multipart==0.0.6
-aiofiles==23.2.1
-requests==2.31.0
+Flask==3.0.3
+Flask-Session==0.8.0
+pyhocon==0.3.61
+pycryptodome==3.21.0
+numpy==2.1.2

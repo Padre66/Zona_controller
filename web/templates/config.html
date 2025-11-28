@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+    <h2>Konfiguráció</h2>
+    <p>Az alábbi JSON szerkesztése role-függő: Diag read-only, Admin/Root írhat a jogosultságok szerint.</p>
+    <textarea id="config-text" rows="25" cols="120"></textarea>
+    <div class="config-actions">
+        <button id="save-config" class="btn-primary">Mentés</button>
+        <span id="config-status"></span>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Anchors</h2>
+    <table id="anchor-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Név</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>Z</th>
+            <th>Enabled</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<script src="{{ url_for('static_files', filename='js/config.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+    <h2>Térképes megjelenítés</h2>
+
+    <div class="map-controls">
+        <label for="tag-select">TAG:</label>
+        <select id="tag-select"></select>
+        <label><input type="checkbox" id="only-selected"> Csak kiválasztott TAG</label>
+    </div>
+
+    <div id="map-container">
+        <canvas id="map-canvas" width="800" height="400"></canvas>
+    </div>
+</section>
+
+<script src="{{ url_for('static_files', filename='js/map.js') }}"></script>
+{% endblock %}

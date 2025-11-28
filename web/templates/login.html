@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="hu">
+<head>
+    <meta charset="utf-8">
+    <title>Login - TDoA Zone Controller</title>
+    <link rel="stylesheet" href="{{ url_for('static_files', filename='css/theme.css') }}">
+</head>
+<body class="login-body">
+<div class="login-box">
+    <h1>Login</h1>
+    <div class="form-row">
+        <label for="username">Felhasználónév</label>
+        <input id="username" type="text">
+    </div>
+    <div class="form-row">
+        <label for="password">Jelszó</label>
+        <input id="password" type="password">
+    </div>
+    <button id="login-btn" class="btn-primary">Bejelentkezés</button>
+    <div id="login-error" class="error-msg"></div>
+</div>
+<script src="{{ url_for('static_files', filename='js/login.js') }}"></script>
+</body>
+</html>
