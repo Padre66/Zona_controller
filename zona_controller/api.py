@@ -16,7 +16,9 @@ def create_api_blueprint(state: State, config_path: str):
         return jsonify({
             "status": "ok",
             "last_msg": state.get_last_message(),
-            "tags": state.get_all_tag_positions()
+            "tags": state.get_all_tag_positions(),
+            # ÚJ: fix pontok HB + mérés összefoglalója
+            "nodes": state.get_nodes_summary(),
         })
 
     @bp.route("/health", methods=["GET"])

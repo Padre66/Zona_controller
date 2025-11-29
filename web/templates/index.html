@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
+
 <section class="panel">
-    <h2>Rendszer státusz</h2>
+    <h2>Fix pontok</h2>
+    <p>Bejövő HB és mérési csomagok fix pontonként (forrás IP:port alapján).</p>
+    <div id="node-cards" class="card-grid"></div>
+</section>
+
+<section class="panel">
+    <h2>Utolsó üzenet (nyers)</h2>
     <pre id="status-json">Betöltés...</pre>
 </section>
 
