@@ -10,7 +10,7 @@ from .forward import PositionForwarder
 
 
 class UDPServer(threading.Thread):
-    def __init__(self, config_path: str, state: State, processor: TDoAProcessor):
+    def __init__(self, config_path: str, state: State, processor: TDoAProcessor, params):
         super().__init__(daemon=True)
 
         self.cfg_mgr = ConfigManager(config_path)
@@ -31,8 +31,7 @@ class UDPServer(threading.Thread):
         self.crypto = CryptoEngine(aes_key, cfg)
         self.state = state
         self.processor = processor
-
-        # forwarder megmaradhat, a tényleges pozíció-forward későbbi lépésben kerül be
+        self.params = params
         self.forwarder = PositionForwarder(cfg)
 
     def run(self):
@@ -47,5 +46,29 @@ class UDPServer(threading.Thread):
             self.state.update_last_message(addr, data, decoded, mode)
 
             if decoded:
-                # ÚJ: csak a feldolgozóra bízzuk – ő teszi a mérést az anchor-bufferbe
+                # zóna filter
+                zone_cfg = self.params.get_zone_params()
+                expected_hex = zone_cfg.get("expected_zone_id_hex")
+                allowed = True
+
+                if expected_hex:
+                    zone_hex = _extract_zone_id_hex(decoded)
+                    if zone_hex is not None:
+                        allowed = (zone_hex == expected_hex)
+
+                if not allowed:
+                    # teljes csomag eldobása — UI se frissül
+                    continue
+
+            # CSAK az engedélyezett csomagok frissítik az állapotot
+            self.state.update_last_message(addr, data, decoded, mode)
+
+            if decoded:
                 self.processor.update_from_message(decoded, ts)
+
+    def _extract_zone_id_hex(decoded: str) -> str | None:
+        # pl.: "... zone_id=0x5A31"
+        for tok in decoded.split():
+            if tok.startswith("zone_id="):
+                return tok.split("=", 1)[1].strip()
+        return None

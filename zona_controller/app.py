@@ -44,7 +44,7 @@ def create_app(config_path: str = "zona.conf"):
     # - debug=True esetén csak akkor, ha WERKZEUG_RUN_MAIN == "true"
     is_reloader_child = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
     if not app.debug or is_reloader_child:
-        udp_server = UDPServer(config_path, state, processor)
+        udp_server = UDPServer(config_path, state, processor, params)
         udp_server.start()
 
     app.register_blueprint(auth_bp)
