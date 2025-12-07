@@ -1,6 +1,7 @@
 import threading
 import time
-from typing import Any, Dict, Optional, List
+from collections import deque
+from typing import Any, Dict, Optional, List, Deque
 
 
 class State:
@@ -19,6 +20,32 @@ class State:
         # ÚJ: fix pontok (forrás IP:port alapján)
         # { "addr": "ip:port", "last_hb": {...}, "last_meas": {...} }
         self._nodes: Dict[str, Dict[str, Any]] = {}
+        self._anchor_buffers: Dict[str, Deque[Dict[str, Any]]] = {}
+        self._anchor_buffer_size = 50  # később configból
+
+    def set_anchor_buffer_size(self, size: int):
+        with self._lock:
+            self._anchor_buffer_size = max(1, size)
+            # meglévő bufferek maxlen frissítése
+            for aid, buf in self._anchor_buffers.items():
+                new_buf = deque(buf, maxlen=self._anchor_buffer_size)
+                self._anchor_buffers[aid] = new_buf
+
+    def add_anchor_measurement(self, anchor_id: str, measurement: Dict[str, Any]):
+        from collections import deque
+        with self._lock:
+            buf = self._anchor_buffers.get(anchor_id)
+            if buf is None:
+                buf = deque(maxlen=self._anchor_buffer_size)
+                self._anchor_buffers[anchor_id] = buf
+            buf.append(measurement)
+
+    def get_anchor_buffer(self, anchor_id: str):
+        with self._lock:
+            buf = self._anchor_buffers.get(anchor_id)
+            if not buf:
+                return []
+            return list(buf)
 
     def update_last_message(self, addr, data: bytes, decoded: Optional[str], mode: Optional[str]):
         ts = time.time()
