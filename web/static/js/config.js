@@ -127,14 +127,16 @@ async function loadConfig() {
 /* ---- CONFIG ÖSSZERAKÁSA MENTÉSHEZ ---- */
 
 function buildConfigFromForm() {
-    // induljunk a jelenlegi configból, hogy amihez nincs UI mező, az megmaradjon
-    const cfg = currentConfig ? structuredClone(currentConfig) : {};
+    // csak azokat a szekciókat küldjük, amiket a UI enged szerkeszteni
+    const cfg = {};
 
-    cfg.system = cfg.system || {};
+    // system
+    cfg.system = {};
     cfg.system.zone_id = getVal('system-zone-id');
     cfg.system.environment = getVal('system-environment');
 
-    cfg.network = cfg.network || {};
+    // network
+    cfg.network = {};
     cfg.network.udp_host = getVal('network-udp-host');
     cfg.network.udp_port = getInt('network-udp-port', 100);
     cfg.network.http_host = getVal('network-http-host');
@@ -142,67 +144,69 @@ function buildConfigFromForm() {
     cfg.network.sink_host = getVal('network-sink-host');
     cfg.network.sink_port = getInt('network-sink-port', 6000);
 
-    cfg.tdoa = cfg.tdoa || {};
+    // tdoa
+    cfg.tdoa = {};
     cfg.tdoa.zone_name = getVal('tdoa-zone-name');
 
-    const runtime = cfg.tdoa.runtime || {};
+    const runtime = {};
     cfg.tdoa.runtime = runtime;
 
     runtime.expected_zone_id_hex = getVal('tdoa-expected-zone-id') || null;
 
-    const map = cfg.tdoa.map || {};
+    const map = {};
     cfg.tdoa.map = map;
-    map.width_m = getFloat('map-width-m', map.width_m ?? 20.0);
-    map.height_m = getFloat('map-height-m', map.height_m ?? 10.0);
-    map.origin = map.origin || {};
-    map.origin.x = getFloat('map-origin-x', map.origin.x ?? 0.0);
-    map.origin.y = getFloat('map-origin-y', map.origin.y ?? 0.0);
+    map.width_m = getFloat('map-width-m', 20.0);
+    map.height_m = getFloat('map-height-m', 10.0);
+    map.origin = {
+        x: getFloat('map-origin-x', 0.0),
+        y: getFloat('map-origin-y', 0.0),
+    };
 
-    const buffer = runtime.buffer || {};
+    const buffer = {};
     runtime.buffer = buffer;
-    buffer.per_anchor_size = getInt('tdoa-buffer-per-anchor-size', buffer.per_anchor_size ?? 50);
-    buffer.max_age_sec = getFloat('tdoa-buffer-max-age', buffer.max_age_sec ?? 2.0);
-    buffer.snapshots_per_anchor = getInt('tdoa-buffer-snapshots', buffer.snapshots_per_anchor ?? 5);
+    buffer.per_anchor_size = getInt('tdoa-buffer-per-anchor-size', 50);
+    buffer.max_age_sec = getFloat('tdoa-buffer-max-age', 2.0);
+    buffer.snapshots_per_anchor = getInt('tdoa-buffer-snapshots', 5);
 
-    const solver = runtime.solver || {};
+    const solver = {};
     runtime.solver = solver;
-    solver.c_m_per_s = getFloat('tdoa-solver-c', solver.c_m_per_s ?? 299792458.0);
-    solver.ts_unit_scale = getFloat('tdoa-solver-ts-unit-scale', solver.ts_unit_scale ?? 1.0);
-    solver.min_anchor_count = getInt('tdoa-solver-min-anchor-count', solver.min_anchor_count ?? 3);
-    solver.min_good_anchors = getInt('tdoa-solver-min-good-anchors', solver.min_good_anchors ?? 3);
-    solver.max_iterations = getInt('tdoa-solver-max-iterations', solver.max_iterations ?? 20);
-    solver.stop_threshold = getFloat('tdoa-solver-stop-threshold', solver.stop_threshold ?? 1e-4);
-    solver.max_residual_m = getFloat('tdoa-solver-max-residual', solver.max_residual_m ?? 2.0);
-    solver.anchor_outlier_reject_pct = getFloat('tdoa-solver-outlier-pct', solver.anchor_outlier_reject_pct ?? 0.2);
+    solver.c_m_per_s = getFloat('tdoa-solver-c', 299792458.0);
+    solver.ts_unit_scale = getFloat('tdoa-solver-ts-unit-scale', 1.0);
+    solver.min_anchor_count = getInt('tdoa-solver-min-anchor-count', 3);
+    solver.min_good_anchors = getInt('tdoa-solver-min-good-anchors', 3);
+    solver.max_iterations = getInt('tdoa-solver-max-iterations', 20);
+    solver.stop_threshold = getFloat('tdoa-solver-stop-threshold', 1e-4);
+    solver.max_residual_m = getFloat('tdoa-solver-max-residual', 2.0);
+    solver.anchor_outlier_reject_pct = getFloat('tdoa-solver-outlier-pct', 0.2);
     solver.reference_anchor = getVal('tdoa-solver-reference-anchor') || 'closest';
     solver.use_lm_solver = getChecked('tdoa-solver-use-lm');
     solver.enable_geometry_checks = getChecked('tdoa-solver-geometry-checks');
 
-    const ig = solver.initial_guess || {};
+    const ig = {};
     solver.initial_guess = ig;
-    ig.x = getFloat('tdoa-solver-initial-x', ig.x ?? 0.0);
-    ig.y = getFloat('tdoa-solver-initial-y', ig.y ?? 0.0);
-    ig.z = getFloat('tdoa-solver-initial-z', ig.z ?? 0.0);
+    ig.x = getFloat('tdoa-solver-initial-x', 0.0);
+    ig.y = getFloat('tdoa-solver-initial-y', 0.0);
+    ig.z = getFloat('tdoa-solver-initial-z', 0.0);
 
     solver.debug_output = getChecked('tdoa-solver-debug-output');
     solver.forward_mode = getVal('tdoa-solver-forward-mode') || 'filtered';
 
-    const filter = runtime.filter || {};
+    const filter = {};
     runtime.filter = filter;
-    filter.pos_sigma_m = getFloat('tdoa-filter-pos-sigma', filter.pos_sigma_m ?? 0.5);
-    filter.process_noise = getFloat('tdoa-filter-process-noise', filter.process_noise ?? 0.1);
-    filter.tag_max_age_sec = getFloat('tdoa-filter-tag-max-age', filter.tag_max_age_sec ?? 2.0);
-    filter.max_jump_m = getFloat('tdoa-filter-max-jump', filter.max_jump_m ?? 5.0);
-    filter.velocity_damping = getFloat('tdoa-filter-velocity-damping', filter.velocity_damping ?? 0.8);
+    filter.pos_sigma_m = getFloat('tdoa-filter-pos-sigma', 0.5);
+    filter.process_noise = getFloat('tdoa-filter-process-noise', 0.1);
+    filter.tag_max_age_sec = getFloat('tdoa-filter-tag-max-age', 2.0);
+    filter.max_jump_m = getFloat('tdoa-filter-max-jump', 5.0);
+    filter.velocity_damping = getFloat('tdoa-filter-velocity-damping', 0.8);
 
-    cfg.web = cfg.web || {};
-    cfg.web.session_timeout_sec = getInt('web-session-timeout', cfg.web.session_timeout_sec ?? 1800);
+    // web
+    cfg.web = {};
+    cfg.web.session_timeout_sec = getInt('web-session-timeout', 1800);
 
     return cfg;
 }
 
 /* ---- MENTÉS ---- */
-
 async function saveConfig() {
     const statusSpan = document.getElementById('config-status');
     statusSpan.textContent = '';
