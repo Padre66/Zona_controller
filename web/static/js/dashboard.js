@@ -28,7 +28,7 @@ function renderNodes(nodes) {
         let statusClass = 'node-chip node-chip-offline';
 
         if (hbAge != null) {
-            if (hbAge < 5) {
+            if (hbAge < 10) {
                 statusText = 'Online';
                 statusClass = 'node-chip node-chip-online';
             } else {
