@@ -3,6 +3,7 @@ from typing import Dict, Tuple, Optional, Any
 from .state import State
 from .runtime_params import TDoARuntimeParams
 from .uwb_parser import parse_uwb_header
+from .tdoa_solver import compute_position_for_tag, TDoASolveResult
 
 class KalmanFilter2D:
     """
@@ -143,5 +144,29 @@ class TDoAProcessor:
 
             # anchore-onkénti buffer
             self.state.add_anchor_measurement(str(anchor_id), meas)
+
+            # TDoA solver belépési pont – a konkrét matek később kerül implementálásra
+            tag_id_str = str(tag_id)
+
+            result = compute_position_for_tag(
+                state=self.state,
+                tag_id=tag_id_str,
+                params=self.params,
+                now_ts=ts_recv,
+            )
+
+            if result is not None:
+                # Itt lesz a végső „kimeneti” lépés:
+                #  - állapot frissítés
+                #  - opcionális továbbítás (PositionForwarder)
+                self.state.update_tag_position(
+                    result.tag_id,
+                    result.x,
+                    result.y,
+                    result.z,
+                    ts_recv,
+                )
+                # TODO: később: forwarder.forward(result.tag_id, result.x, result.y, result.z, ts_recv)
+
 
             # IDE jön majd később a TDoA solver + state.update_tag_position(...)
