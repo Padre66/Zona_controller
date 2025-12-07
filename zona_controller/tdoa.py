@@ -68,35 +68,57 @@ class TDoAProcessor:
         self.filters: Dict[str, KalmanFilter2D] = {}
 
     def parse_message(self, decoded: str) -> Optional[Tuple[str, float, float, float]]:
+        """
+        Pozíció sor parser.
+        Elvárt forma (case-insensitive kulcsok):
+            TAG:<id>,X:<x>,Y:<y>,Z:<z>,...
+
+        Extra mezőket ignoráljuk.
+        """
         try:
             parts = decoded.split(",")
             kv = {}
             for p in parts:
-                if ":" in p:
-                    k, v = p.split(":", 1)
-                    kv[k.strip().upper()] = v.strip()
+                p = p.strip()
+                if ":" not in p:
+                    continue
+                k, v = p.split(":", 1)
+                kv[k.strip().upper()] = v.strip()
+
             tag_id = kv.get("TAG")
             if not tag_id:
                 return None
+
             x = float(kv.get("X", "0"))
             y = float(kv.get("Y", "0"))
             z = float(kv.get("Z", "0"))
+
             return tag_id, x, y, z
         except Exception:
             return None
 
     def update_from_message(self, decoded: str, ts: float):
-        parsed = self.parse_message(decoded)
-        if not parsed:
-            return
-        tag_id, x_meas, y_meas, z_meas = parsed
+        # ÚJ: több sor / csomag támogatása
+        lines = decoded.splitlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
 
-        # Kalman szűrő TAG-enként
-        kf = self.filters.get(tag_id)
-        if kf is None:
-            kf = KalmanFilter2D(x_meas, y_meas)
-            self.filters[tag_id] = kf
-        kf.step(ts, (x_meas, y_meas))
-        x_f, y_f, vx_f, vy_f = kf.get_state()
+            parsed = self.parse_message(line)
+            if not parsed:
+                # nem TAG-pozíció sor, hagyjuk figyelmen kívül
+                continue
 
-        self.state.update_tag_position(tag_id, x_f, y_f, z_meas, ts)
+            tag_id, x_meas, y_meas, z_meas = parsed
+
+            # Kalman szűrő TAG-enként
+            kf = self.filters.get(tag_id)
+            if kf is None:
+                kf = KalmanFilter2D(x_meas, y_meas)
+                self.filters[tag_id] = kf
+
+            kf.step(ts, (x_meas, y_meas))
+            x_f, y_f, vx_f, vy_f = kf.get_state()
+
+            self.state.update_tag_position(tag_id, x_f, y_f, z_meas, ts)
