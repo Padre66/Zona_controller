@@ -1,9 +1,214 @@
 {% extends "base.html" %}
 {% block content %}
+
 <section class="panel">
     <h2>Konfiguráció</h2>
-    <p>Az alábbi JSON szerkesztése role-függő: Diag read-only, Admin/Root írhat a jogosultságok szerint.</p>
-    <textarea id="config-text" rows="25" cols="120"></textarea>
+    <p>Diag role csak olvas, Admin/Root tud menteni a jogosultságok szerint.</p>
+
+    <div class="config-layout">
+
+        <!-- BAL OSZLOP: rendszer + web -->
+        <div class="config-column">
+            <h3 class="config-column-title">Rendszer</h3>
+
+            <div class="config-card">
+                <h4 class="config-card-title">System</h4>
+                <div class="form-row">
+                    <label for="system-zone-id">Zone ID</label>
+                    <input id="system-zone-id" type="text">
+                </div>
+                <div class="form-row">
+                    <label for="system-environment">Environment</label>
+                    <input id="system-environment" type="text">
+                </div>
+            </div>
+
+            <div class="config-card">
+                <h4 class="config-card-title">Web</h4>
+                <div class="form-row">
+                    <label for="web-session-timeout">Session timeout [s]</label>
+                    <input id="web-session-timeout" type="number">
+                </div>
+            </div>
+        </div>
+
+        <!-- KÖZÉPSŐ OSZLOP: hálózat + TDoA zóna / map -->
+        <div class="config-column">
+            <h3 class="config-column-title">Hálózat</h3>
+
+            <div class="config-card">
+                <h4 class="config-card-title">Network</h4>
+                <div class="form-row">
+                    <label for="network-udp-host">UDP host</label>
+                    <input id="network-udp-host" type="text">
+                </div>
+                <div class="form-row">
+                    <label for="network-udp-port">UDP port</label>
+                    <input id="network-udp-port" type="number">
+                </div>
+                <div class="form-row">
+                    <label for="network-http-host">HTTP host</label>
+                    <input id="network-http-host" type="text">
+                </div>
+                <div class="form-row">
+                    <label for="network-http-port">HTTP port</label>
+                    <input id="network-http-port" type="number">
+                </div>
+                <div class="form-row">
+                    <label for="network-sink-host">Sink host</label>
+                    <input id="network-sink-host" type="text">
+                </div>
+                <div class="form-row">
+                    <label for="network-sink-port">Sink port</label>
+                    <input id="network-sink-port" type="number">
+                </div>
+            </div>
+
+            <h3 class="config-column-title">TDoA – Zóna / Map</h3>
+
+            <div class="config-card">
+                <h4 class="config-card-title">Zóna</h4>
+                <div class="form-row">
+                    <label for="tdoa-zone-name">Zone name</label>
+                    <input id="tdoa-zone-name" type="text">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-expected-zone-id">Expected zone_id (hex)</label>
+                    <input id="tdoa-expected-zone-id" type="text" placeholder="0x5B31">
+                </div>
+            </div>
+
+            <div class="config-card">
+                <h4 class="config-card-title">Map</h4>
+                <div class="form-row">
+                    <label for="map-width-m">Width [m]</label>
+                    <input id="map-width-m" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="map-height-m">Height [m]</label>
+                    <input id="map-height-m" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="map-origin-x">Origin X [m]</label>
+                    <input id="map-origin-x" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="map-origin-y">Origin Y [m]</label>
+                    <input id="map-origin-y" type="number" step="0.01">
+                </div>
+            </div>
+        </div>
+
+        <!-- JOBB OSZLOP: TDoA számítás -->
+        <div class="config-column">
+            <h3 class="config-column-title">TDoA – Számítás</h3>
+
+            <div class="config-card">
+                <h4 class="config-card-title">Buffer</h4>
+                <div class="form-row">
+                    <label for="tdoa-buffer-per-anchor-size">Per anchor size</label>
+                    <input id="tdoa-buffer-per-anchor-size" type="number">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-buffer-max-age">Max age [s]</label>
+                    <input id="tdoa-buffer-max-age" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-buffer-snapshots">Snapshots / anchor</label>
+                    <input id="tdoa-buffer-snapshots" type="number">
+                </div>
+            </div>
+
+            <div class="config-card">
+                <h4 class="config-card-title">Solver</h4>
+                <div class="form-row">
+                    <label for="tdoa-solver-c">c [m/s]</label>
+                    <input id="tdoa-solver-c" type="number" step="1">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-ts-unit-scale">ts_unit_scale</label>
+                    <input id="tdoa-solver-ts-unit-scale" type="number" step="1e-12">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-min-anchor-count">Min anchor count</label>
+                    <input id="tdoa-solver-min-anchor-count" type="number">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-min-good-anchors">Min good anchors</label>
+                    <input id="tdoa-solver-min-good-anchors" type="number">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-max-iterations">Max iterations</label>
+                    <input id="tdoa-solver-max-iterations" type="number">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-stop-threshold">Stop threshold</label>
+                    <input id="tdoa-solver-stop-threshold" type="number" step="1e-6">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-max-residual">Max residual [m]</label>
+                    <input id="tdoa-solver-max-residual" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-outlier-pct">Outlier reject pct</label>
+                    <input id="tdoa-solver-outlier-pct" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-reference-anchor">Ref. anchor mode</label>
+                    <input id="tdoa-solver-reference-anchor" type="text" placeholder="closest / lowest_id / fixed">
+                </div>
+                <div class="form-row checkbox-row">
+                    <label for="tdoa-solver-use-lm">Use LM solver</label>
+                    <input id="tdoa-solver-use-lm" type="checkbox">
+                </div>
+                <div class="form-row checkbox-row">
+                    <label for="tdoa-solver-geometry-checks">Geometry checks</label>
+                    <input id="tdoa-solver-geometry-checks" type="checkbox">
+                </div>
+                <div class="form-row">
+                    <label>Initial guess [m]</label>
+                    <div class="inline-triplet">
+                        <input id="tdoa-solver-initial-x" type="number" step="0.01" placeholder="x">
+                        <input id="tdoa-solver-initial-y" type="number" step="0.01" placeholder="y">
+                        <input id="tdoa-solver-initial-z" type="number" step="0.01" placeholder="z">
+                    </div>
+                </div>
+                <div class="form-row checkbox-row">
+                    <label for="tdoa-solver-debug-output">Debug output</label>
+                    <input id="tdoa-solver-debug-output" type="checkbox">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-solver-forward-mode">Forward mode</label>
+                    <input id="tdoa-solver-forward-mode" type="text" placeholder="filtered / raw / both">
+                </div>
+            </div>
+
+            <div class="config-card">
+                <h4 class="config-card-title">Filter</h4>
+                <div class="form-row">
+                    <label for="tdoa-filter-pos-sigma">pos_sigma_m</label>
+                    <input id="tdoa-filter-pos-sigma" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-filter-process-noise">process_noise</label>
+                    <input id="tdoa-filter-process-noise" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-filter-tag-max-age">tag_max_age_sec</label>
+                    <input id="tdoa-filter-tag-max-age" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-filter-max-jump">max_jump_m</label>
+                    <input id="tdoa-filter-max-jump" type="number" step="0.01">
+                </div>
+                <div class="form-row">
+                    <label for="tdoa-filter-velocity-damping">velocity_damping</label>
+                    <input id="tdoa-filter-velocity-damping" type="number" step="0.01">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="config-actions">
         <button id="save-config" class="btn-primary">Mentés</button>
         <span id="config-status"></span>
@@ -21,6 +226,7 @@
             <th>Y</th>
             <th>Z</th>
             <th>Enabled</th>
+            <th>Addr</th>
         </tr>
         </thead>
         <tbody></tbody>
