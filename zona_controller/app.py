@@ -8,6 +8,7 @@ from .auth import bp as auth_bp, current_user
 from .api import create_api_blueprint
 from .state import State
 from .udp_server import UDPServer
+from .tdoa import TDoAProcessor
 from .runtime_params import TDoARuntimeParams
 
 
@@ -35,6 +36,7 @@ def create_app(config_path: str = "zona.conf"):
     # Anchor buffer méret beállítása induláskor
     buf_cfg = params.get_buffer_params()
     per_anchor_size = int(buf_cfg.get("per_anchor_size", 50))
+    processor = TDoAProcessor(state, params)
     state.set_anchor_buffer_size(per_anchor_size)
 
     # Csak a "fő" processzben indítjuk el a UDP szervert:
@@ -42,7 +44,7 @@ def create_app(config_path: str = "zona.conf"):
     # - debug=True esetén csak akkor, ha WERKZEUG_RUN_MAIN == "true"
     is_reloader_child = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
     if not app.debug or is_reloader_child:
-        udp_server = UDPServer(config_path, state)
+        udp_server = UDPServer(config_path, state, processor)
         udp_server.start()
 
     app.register_blueprint(auth_bp)

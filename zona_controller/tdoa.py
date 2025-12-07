@@ -1,7 +1,8 @@
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Any
 
 from .state import State
-
+from .runtime_params import TDoARuntimeParams
+from .uwb_parser import parse_uwb_header
 
 class KalmanFilter2D:
     """
@@ -63,9 +64,19 @@ class TDoAProcessor:
       "TAG:<id>,X:<x>,Y:<y>,Z:<z>"
     Itt lehet később kiegészíteni valódi TDoA matematikával.
     """
-    def __init__(self, state: State):
+    def __init__(self, state: State, params: TDoARuntimeParams):
         self.state = state
+        self.params = params
         self.filters: Dict[str, KalmanFilter2D] = {}
+
+    def _zone_matches(self, uwb: Dict[str, Any]) -> bool:
+        zone_cfg = self.params.get_zone_params()
+        expected_hex = zone_cfg.get("expected_zone_id_hex")
+        if not expected_hex:
+            # nincs konfigurálva zóna filter → mindent engedünk
+            return True
+        z = uwb.get("zone_id_hex")
+        return z == expected_hex
 
     def parse_message(self, decoded: str) -> Optional[Tuple[str, float, float, float]]:
         """
@@ -97,28 +108,40 @@ class TDoAProcessor:
         except Exception:
             return None
 
-    def update_from_message(self, decoded: str, ts: float):
-        # ÚJ: több sor / csomag támogatása
-        lines = decoded.splitlines()
-        for line in lines:
+    def update_from_message(self, decoded: str, ts_recv: float):
+        """
+        decoded: teljes dekódolt szöveg (lehet több sor is).
+        ts_recv: fogadás időbélyege (time.time()).
+        """
+        for line in decoded.splitlines():
             line = line.strip()
             if not line:
                 continue
 
-            parsed = self.parse_message(line)
-            if not parsed:
-                # nem TAG-pozíció sor, hagyjuk figyelmen kívül
+            uwb = parse_uwb_header(line)
+            if uwb is None:
+                # nem UWB sor – ha kell, itt később kezelheted a régi TAG:X,Y,Z formátumot
                 continue
 
-            tag_id, x_meas, y_meas, z_meas = parsed
+            # zóna-szűrés
+            if not self._zone_matches(uwb):
+                continue
 
-            # Kalman szűrő TAG-enként
-            kf = self.filters.get(tag_id)
-            if kf is None:
-                kf = KalmanFilter2D(x_meas, y_meas)
-                self.filters[tag_id] = kf
+            anchor_id = uwb.get("anchor_hex") or uwb.get("anchor_id")
+            tag_id = uwb.get("tag_hex") or uwb.get("tag_id")
+            ts_raw = uwb.get("ts_raw")
 
-            kf.step(ts, (x_meas, y_meas))
-            x_f, y_f, vx_f, vy_f = kf.get_state()
+            if not anchor_id or tag_id is None:
+                continue
 
-            self.state.update_tag_position(tag_id, x_f, y_f, z_meas, ts)
+            meas: Dict[str, Any] = {
+                "ts_recv": ts_recv,
+                "ts_raw": ts_raw,
+                "tag_id": tag_id,
+                "uwb": uwb,
+            }
+
+            # anchore-onkénti buffer
+            self.state.add_anchor_measurement(str(anchor_id), meas)
+
+            # IDE jön majd később a TDoA solver + state.update_tag_position(...)

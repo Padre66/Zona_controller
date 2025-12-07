@@ -25,6 +25,11 @@ class TDoARuntimeParams:
         solver_cfg = runtime.get("solver", {})
         filter_cfg = runtime.get("filter", {})
 
+        # ÚJ: zóna filter
+        zone_cfg = {
+            "expected_zone_id_hex": runtime.get("expected_zone_id_hex", None),
+        }
+
         with self._lock:
             self._cache = {
                 "buffer": {
@@ -41,6 +46,7 @@ class TDoARuntimeParams:
                     "process_noise": float(filter_cfg.get("process_noise", 0.1)),
                     "tag_max_age_sec": float(filter_cfg.get("tag_max_age_sec", 2.0)),
                 },
+                "zone": zone_cfg,  # <-- ÚJ
             }
             self._last_load_ts = now
 
@@ -58,3 +64,8 @@ class TDoARuntimeParams:
         self._reload_if_needed()
         with self._lock:
             return dict(self._cache.get("filter", {}))
+
+    def get_zone_params(self) -> Dict[str, Any]:
+        self._reload_if_needed()
+        with self._lock:
+            return dict(self._cache.get("zone", {}))
