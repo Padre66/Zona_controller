@@ -49,35 +49,36 @@ class State:
 
     def update_last_message(self, addr, data: bytes, decoded: Optional[str], mode: Optional[str]):
         ts = time.time()
-        addr_str = f"{addr[0]}:{addr[1]}"
+        ip = addr[0]
+        port = addr[1]
+
+        addr_full = f"{ip}:{port}"  # debug / last_msg-hez
+        node_key = ip  # <-- csak IP alapján csoportosítunk
 
         with self._lock:
-            # meglevő globális utolsó üzenet
+            # globális last_msg maradhat ip:port-tal
             self._last_msg["time"] = ts
-            self._last_msg["from"] = addr_str
+            self._last_msg["from"] = addr_full
             self._last_msg["raw_len"] = len(data)
             self._last_msg["raw_hex"] = data.hex()
             self._last_msg["decoded"] = decoded
             self._last_msg["mode"] = mode
 
-            # ÚJ: node (fix pont) szintű info
             if decoded:
-                node = self._nodes.get(addr_str)
+                node = self._nodes.get(node_key)
                 if not node:
                     node = {
-                        "addr": addr_str,
+                        "addr": node_key,  # csak IP
+                        "last_addr_full": None,  # opcionális: utolsó ip:port
                         "last_hb": None,
                         "last_meas": None,
                     }
-                    self._nodes[addr_str] = node
+                    self._nodes[node_key] = node
 
-                # HB sor vagy mérés?
+                node["last_addr_full"] = addr_full
+
                 text = decoded.strip()
-                kind = None
-                if text.startswith(("HB", "HB:", "HB ")):
-                    kind = "hb"
-                else:
-                    kind = "meas"
+                kind = "hb" if text.startswith(("HB", "HB:", "HB ")) else "meas"
 
                 entry = {
                     "time": ts,
@@ -89,7 +90,7 @@ class State:
 
                 if kind == "hb":
                     node["last_hb"] = entry
-                elif kind == "meas":
+                else:
                     node["last_meas"] = entry
 
     def get_last_message(self) -> Dict[str, Any]:
