@@ -1,16 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
+
 <section class="panel">
     <h2>Térképes megjelenítés</h2>
 
-    <div class="map-controls">
-        <label for="tag-select">TAG:</label>
-        <select id="tag-select"></select>
-        <label><input type="checkbox" id="only-selected"> Csak kiválasztott TAG</label>
-    </div>
+    <div class="map-layout">
 
-    <div id="map-container">
-        <canvas id="map-canvas" width="800" height="400"></canvas>
+        <!-- Bal oldal: vezérlők + vászon -->
+        <div class="map-main">
+
+            <div class="map-controls">
+                <div class="map-controls-row">
+                    <label for="tag-select">TAG</label>
+                    <select id="tag-select"></select>
+                </div>
+
+                <div class="map-controls-row">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" id="only-selected">
+                        <span>Csak kiválasztott TAG</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="map-container">
+                <!-- A JS (map.js) ezt a canvast használja a rajzoláshoz -->
+                <canvas id="map-canvas" width="900" height="500"></canvas>
+            </div>
+        </div>
+
+        <!-- Jobb oldal: státusz / infó panel (most még csak hely foglaló) -->
+        <aside class="map-sidebar">
+            <h3>TAG információk</h3>
+            <div class="map-info-row">
+                <span class="label">Kiválasztott TAG:</span>
+                <span id="tag-info-id">–</span>
+            </div>
+            <div class="map-info-row">
+                <span class="label">Pozíció [m]:</span>
+                <span id="tag-info-pos">–</span>
+            </div>
+            <div class="map-info-row">
+                <span class="label">Utolsó frissítés:</span>
+                <span id="tag-info-updated">–</span>
+            </div>
+
+            <h3 style="margin-top: 24px;">Anchorok</h3>
+            <table class="simple-table" id="map-anchor-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>Z</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- opcionálisan /api/anchors-ból tölthető majd JS-ből -->
+                </tbody>
+            </table>
+        </aside>
+
     </div>
 </section>
 
