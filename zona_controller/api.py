@@ -109,4 +109,18 @@ def create_api_blueprint(state: State, config_path: str):
             return jsonify({"error": "not_found"}), 404
         return jsonify({"tag_id": tag_id, **pos})
 
+    @bp.route("/tdoa/map", methods=["GET"])
+    @require_role("diag")
+    def get_tdoa_map():
+        cfg = cfg_mgr.get_config()
+        tdoa = cfg.get("tdoa", {})
+        m = tdoa.get("map", {})
+        return jsonify({
+            "width_m": m.get("width_m"),
+            "height_m": m.get("height_m"),
+            "origin": m.get("origin", {"x": 0.0, "y": 0.0}),
+            "shape": m.get("shape", {}),
+            "anchors": tdoa.get("anchors", []),
+        })
+
     return bp

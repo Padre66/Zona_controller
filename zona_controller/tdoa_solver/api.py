@@ -60,31 +60,110 @@ def compute_position_for_tag(
     now_ts: float,
 ) -> Optional[TDoASolveResult]:
     """
-    FŐ BELÉPÉSI PONT A KÜLSŐ VILÁG SZÁMÁRA.
+    Egyszerű, fejlesztői dummy pozíciószámítás.
 
-    Ezt fogja hívni a TDoAProcessor (vagy más réteg), ha egy TAG-hez
-    pozíciót akar számolni.
+    Nem végez valódi TDoA-t, csak:
+      - végigmegy a zona.conf tdoa.anchors listán,
+      - minden anchorhoz megnézi a State anchor-bufferét,
+      - kikeresi az adott TAG-hez tartozó legfrissebb mérést egy időablakon belül,
+      - csoportosítja őket 'sync' szerint,
+      - a legnagyobb sync-csoport anchor pozícióinak átlagát adja vissza (x,y,z).
 
-    Lépések (később részletezve):
-      1) anchor→TAG mérések kigyűjtése a State-ből (collect_anchor_snapshots_for_tag)
-      2) TDoA számítás (solve_tdoa_for_tag)
-      3) eredmény visszaadása TDoASolveResult formában
+    Követelmény: ugyanazon sync-hez tartozó legalább 3 anchor mérés.
     """
-    # runtime paraméterekből max_age_sec
+
+    # 1) időablak a runtime buffer paraméterekből
     buf_cfg = params.get_buffer_params()
     max_age_sec = float(buf_cfg.get("max_age_sec", 2.0))
 
-    # 1) snapshotok gyűjtése – egyelőre placeholder (üres dict)
-    anchor_meas = collect_anchor_snapshots_for_tag(
-        state=state,
-        tag_id=tag_id,
-        max_age_sec=max_age_sec,
-    )
-
-    if not anchor_meas:
-        # nincs elég adat a számításhoz
+    # 2) anchors beolvasása a zona.conf-ból
+    try:
+        cfg = params._cfg_mgr.get_config()  # ConfigManager a runtime_params-ben
+    except AttributeError:
         return None
 
-    # 2) TDoA solver – jelenleg még csak váz, None-t ad vissza
-    result = solve_tdoa_for_tag(tag_id, anchor_meas, params)
-    return result
+    tdoa_cfg = cfg.get("tdoa", {})
+    anchors_cfg = tdoa_cfg.get("anchors", [])
+    if not anchors_cfg:
+        return None
+
+    tag_id_str = str(tag_id)
+
+    # 3) per-anchor legfrissebb, időben közeli mérés az adott TAG-re
+    candidates: List[tuple] = []  # (anchor_id, pos_dict, sync_val, ts_recv)
+
+    for a in anchors_cfg:
+        aid = str(a.get("id") or "").strip()
+        pos = a.get("position") or {}
+        if not aid or not {"x", "y", "z"} <= pos.keys():
+            continue
+
+        buf = state.get_anchor_buffer(aid)
+        if not buf:
+            continue
+
+        latest = None
+        for m in reversed(buf):
+            if str(m.get("tag_id")) != tag_id_str:
+                continue
+            ts_recv = float(m.get("ts_recv", 0.0))
+            if now_ts - ts_recv > max_age_sec:
+                continue
+            latest = m
+            break
+
+        if not latest:
+            continue
+
+        uwb = latest.get("uwb", {})
+        sync_val = uwb.get("sync")
+        if sync_val is None:
+            continue
+
+        candidates.append(
+            (aid, pos, sync_val, float(latest.get("ts_recv", 0.0)))
+        )
+
+    if not candidates:
+        return None
+
+    # 4) Csoportosítás sync alapján – azt használjuk, amelyikhez a legtöbb anchor tartozik
+    by_sync: Dict[int, List[tuple]] = {}
+    for item in candidates:
+        sync_val = item[2]
+        by_sync.setdefault(sync_val, []).append(item)
+
+    best_sync, group = max(by_sync.items(), key=lambda kv: len(kv[1]))
+
+    # Legalább 3 anchor kell
+    if len(group) < 3:
+        return None
+
+    # 5) Anchor pozíciók átlaga
+    xs: List[float] = []
+    ys: List[float] = []
+    zs: List[float] = []
+    used_anchors: List[str] = []
+
+    for aid, pos, sync_val, ts in group:
+        xs.append(float(pos["x"]))
+        ys.append(float(pos["y"]))
+        zs.append(float(pos["z"]))
+        used_anchors.append(aid)
+
+    avg_x = sum(xs) / len(xs)
+    avg_y = sum(ys) / len(ys)
+    avg_z = sum(zs) / len(zs)
+
+    return TDoASolveResult(
+        tag_id=tag_id_str,
+        x=avg_x,
+        y=avg_y,
+        z=avg_z,
+        used_anchors=used_anchors,
+        debug_info={
+            "mode": "dummy_centroid",
+            "sync": best_sync,
+            "anchor_count": len(used_anchors),
+        },
+    )
