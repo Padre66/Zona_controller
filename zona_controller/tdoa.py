@@ -79,6 +79,33 @@ class TDoAProcessor:
         z = uwb.get("zone_id_hex")
         return z == expected_hex
 
+    def compute_dummy_position(self, tag_id, anchor_measurements):
+        """
+        Egyszerű fejlesztői pozícióbecslés.
+        A pozíció az anchor pozíciók átlagából számolódik.
+        """
+        positions = []
+        for m in anchor_measurements:
+            anchor = self.state.anchors.get(m.anchor_id)
+            if not anchor or not anchor.position:
+                continue
+            positions.append(anchor.position)
+
+        if len(positions) < 2:
+            return None  # nincs elég adat még dummyhoz sem
+
+        # anchor pozíciók átlagolása
+        avg_x = sum(p["x"] for p in positions) / len(positions)
+        avg_y = sum(p["y"] for p in positions) / len(positions)
+        avg_z = sum(p["z"] for p in positions) / len(positions)
+
+        return {
+            "x": avg_x,
+            "y": avg_y,
+            "z": avg_z,
+            "dummy": True  # jelzés, hogy fejlesztői pozíció
+        }
+
     def parse_message(self, decoded: str) -> Optional[Tuple[str, float, float, float]]:
         """
         Pozíció sor parser.
@@ -155,10 +182,27 @@ class TDoAProcessor:
                 now_ts=ts_recv,
             )
 
+            # ---- DUMMY FALLBACK: ha nincs valódi TDoA pozíció ----
+            if result is None:
+                # Gyűjtsük ki a TAG-hoz tartozó anchor méréseket
+                meas_list = self.state.get_measurements_for_tag(tag_id_str)
+
+                # dummy pozíciót számolunk anchor pozíciók alapján
+                dummy_pos = self.compute_dummy_position(tag_id_str, meas_list)
+
+                if dummy_pos is not None:
+                    # írjuk be a state-be mint valódi pozíciót
+                    self.state.update_tag_position(
+                        tag_id_str,
+                        dummy_pos["x"],
+                        dummy_pos["y"],
+                        dummy_pos["z"],
+                        ts_recv,
+                    )
+                    continue  # ugrunk a következő UWB sorra
+
+            # ---- VALÓDI solver eredmény ----
             if result is not None:
-                # Itt lesz a végső „kimeneti” lépés:
-                #  - állapot frissítés
-                #  - opcionális továbbítás (PositionForwarder)
                 self.state.update_tag_position(
                     result.tag_id,
                     result.x,
@@ -166,7 +210,7 @@ class TDoAProcessor:
                     result.z,
                     ts_recv,
                 )
-                # TODO: később: forwarder.forward(result.tag_id, result.x, result.y, result.z, ts_recv)
+                continue
 
 
             # IDE jön majd később a TDoA solver + state.update_tag_position(...)
