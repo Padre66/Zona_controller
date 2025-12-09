@@ -1,5 +1,59 @@
 let currentConfig = null;
 
+function renderShapeVertices(vertices) {
+    const tbody = document.querySelector('#map-shape-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    (vertices || []).forEach((v, idx) => {
+        const tr = document.createElement('tr');
+
+        const tdIdx = document.createElement('td');
+        tdIdx.textContent = String(idx + 1);
+
+        const tdX = document.createElement('td');
+        const inpX = document.createElement('input');
+        inpX.type = 'number';
+        inpX.step = '0.01';
+        inpX.value = v.x != null ? v.x : '';
+        inpX.classList.add('shape-x');
+        tdX.appendChild(inpX);
+
+        const tdY = document.createElement('td');
+        const inpY = document.createElement('input');
+        inpY.type = 'number';
+        inpY.step = '0.01';
+        inpY.value = v.y != null ? v.y : '';
+        inpY.classList.add('shape-y');
+        tdY.appendChild(inpY);
+
+        tr.appendChild(tdIdx);
+        tr.appendChild(tdX);
+        tr.appendChild(tdY);
+
+        tbody.appendChild(tr);
+    });
+}
+
+function getShapeVerticesFromForm() {
+    const tbody = document.querySelector('#map-shape-table tbody');
+    if (!tbody) return [];
+
+    const vertices = [];
+    tbody.querySelectorAll('tr').forEach(tr => {
+        const xInput = tr.querySelector('input.shape-x');
+        const yInput = tr.querySelector('input.shape-y');
+        if (!xInput || !yInput) return;
+
+        const x = parseFloat(xInput.value);
+        const y = parseFloat(yInput.value);
+        if (!isNaN(x) && !isNaN(y)) {
+            vertices.push({ x, y });
+        }
+    });
+    return vertices;
+}
+
 function setVal(id, value) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -87,6 +141,11 @@ async function loadConfig() {
     setNumber('map-origin-x', origin.x);
     setNumber('map-origin-y', origin.y);
 
+    // ÚJ: shape betöltése a táblázatba
+    const shape = map.shape ?? {};
+    const vertices = shape.vertices ?? [];
+    renderShapeVertices(vertices);
+
     const buffer = runtime.buffer ?? {};
     setNumber('tdoa-buffer-per-anchor-size', buffer.per_anchor_size);
     setNumber('tdoa-buffer-max-age', buffer.max_age_sec);
@@ -160,6 +219,12 @@ function buildConfigFromForm() {
     map.origin = {
         x: getFloat('map-origin-x', 0.0),
         y: getFloat('map-origin-y', 0.0),
+    };
+
+    // ÚJ: polygon shape mentése
+    map.shape = {
+        type: 'polygon',
+        vertices: getShapeVerticesFromForm(),
     };
 
     const buffer = {};
@@ -245,6 +310,50 @@ async function saveConfig() {
 
 document.getElementById('save-config').addEventListener('click', saveConfig);
 
+function initShapeEditor() {
+    const btnAdd = document.getElementById('map-shape-add');
+    const btnClear = document.getElementById('map-shape-clear');
+    const tbody = document.querySelector('#map-shape-table tbody');
+
+    if (btnAdd) {
+        btnAdd.addEventListener('click', () => {
+            const tr = document.createElement('tr');
+
+            const idx = tbody ? tbody.children.length + 1 : 1;
+            const tdIdx = document.createElement('td');
+            tdIdx.textContent = String(idx);
+
+            const tdX = document.createElement('td');
+            const inpX = document.createElement('input');
+            inpX.type = 'number';
+            inpX.step = '0.01';
+            inpX.classList.add('shape-x');
+            tdX.appendChild(inpX);
+
+            const tdY = document.createElement('td');
+            const inpY = document.createElement('input');
+            inpY.type = 'number';
+            inpY.step = '0.01';
+            inpY.classList.add('shape-y');
+            tdY.appendChild(inpY);
+
+            tr.appendChild(tdIdx);
+            tr.appendChild(tdX);
+            tr.appendChild(tdY);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    if (btnClear) {
+        btnClear.addEventListener('click', () => {
+            if (tbody) {
+                tbody.innerHTML = '';
+            }
+        });
+    }
+}
+
 /* ---- ANCHORS LISTA ---- */
 
 async function loadAnchors() {
@@ -269,6 +378,8 @@ async function loadAnchors() {
 }
 
 /* ---- INIT ---- */
-
-loadConfig();
-loadAnchors();
+document.addEventListener('DOMContentLoaded', () => {
+    initShapeEditor();   // <-- ÚJ: gombok bekötése
+    loadConfig();        // betölti a configot + renderShapeVertices(...)
+    loadAnchors();
+});

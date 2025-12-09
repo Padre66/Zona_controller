@@ -90,6 +90,27 @@
                 <label for="map-origin-y">Origin Y [m]</label>
                 <input id="map-origin-y" type="number" step="0.01">
             </div>
+            <div class="form-row">
+                <label>Shape vertices (polygon)</label>
+                <div style="width: 100%;">
+                    <table id="map-shape-table" class="simple-table">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>X [m]</th>
+                            <th>Y [m]</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- ide generálja a JS a sorokat -->
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 8px; display: flex; gap: 8px;">
+                        <button type="button" id="map-shape-add" class="btn-secondary">+ Új pont</button>
+                        <button type="button" id="map-shape-clear" class="btn-secondary">Összes törlése</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Buffer -->
