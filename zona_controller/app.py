@@ -1,7 +1,15 @@
 from pathlib import Path
 import os
 
-from flask import Flask, send_from_directory, render_template, redirect, url_for
+from flask import (
+    Flask,
+    send_from_directory,
+    render_template,
+    redirect,
+    url_for,
+    session,
+    request,
+)
 from flask_session import Session
 
 from .auth import bp as auth_bp, current_user
@@ -51,6 +59,26 @@ def create_app(config_path: str = "zona.conf"):
     api_bp = create_api_blueprint(state, config_path)
     app.register_blueprint(api_bp)
 
+    # Minden endpoint előtt lefut: ha nem vagy bejelentkezve, login oldalra visz
+    @app.before_request
+    def require_login_for_all():
+        # Mindig engedett útvonalak:
+        # - login oldal
+        # - auth API (login/logout)
+        # - statikus fájlok
+        path = request.path or ""
+
+        if path.startswith("/static/"):
+            return None
+        if path.startswith("/api/auth/"):
+            return None
+        if path == "/login":
+            return None
+
+        # Ha nincs user a sessionben → login oldal
+        if not current_user():
+            return redirect(url_for("login_page"))
+
     @app.route("/")
     def index():
         if not current_user():
@@ -60,6 +88,13 @@ def create_app(config_path: str = "zona.conf"):
     @app.route("/login")
     def login_page():
         return render_template("login.html")
+
+    @app.route("/logout", methods=["GET", "POST"])
+    def logout_page():
+        # töröljük a user-t a sessionből
+        session.pop("user", None)
+        # vissza a login oldalra
+        return redirect(url_for("login_page"))
 
     @app.route("/map")
     def map_page():

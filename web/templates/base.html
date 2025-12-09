@@ -9,10 +9,12 @@
 <header class="app-header">
     <div class="app-title">TDoA Zone Controller</div>
     <nav class="app-nav">
-        <a href="{{ url_for('index') }}">Dashboard</a>
-        <a href="{{ url_for('map_page') }}">Map</a>
-        <a href="{{ url_for('config_page') }}">Config</a>
+        <a href="/">Kezdőlap</a> |
+        <a href="/map">Térkép</a> |
+        <a href="/config">Konfiguráció</a> |
+        <a href="/logout" style="float:right;">Kijelentkezés</a>
     </nav>
+
 </header>
 <main class="app-main">
     {% block content %}{% endblock %}
