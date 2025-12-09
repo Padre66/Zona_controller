@@ -28,7 +28,11 @@ def login():
     if not check_password_hash(user.get("password_hash", ""), password):
         return jsonify({"ok": False, "error": "invalid_credentials"}), 401
 
+    # új session, permanent módban (timeout PERMANENT_SESSION_LIFETIME alapján)
+    session.clear()
+    session.permanent = True
     session["user"] = {"username": username, "role": user.get("role", "diag")}
+
     return jsonify({"ok": True, "role": user.get("role", "diag")})
 
 

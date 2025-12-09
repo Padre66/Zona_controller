@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from datetime import timedelta
 
 from flask import (
     Flask,
@@ -18,7 +19,7 @@ from .state import State
 from .udp_server import UDPServer
 from .tdoa import TDoAProcessor
 from .runtime_params import TDoARuntimeParams
-
+from .config import ConfigManager
 
 def create_app(config_path: str = "zona.conf"):
     base_dir = Path(__file__).resolve().parent.parent
@@ -30,8 +31,18 @@ def create_app(config_path: str = "zona.conf"):
         template_folder=str(web_dir / "templates"),
     )
 
+    # Config beolvasás (zona.conf)
+    cfg_mgr = ConfigManager(config_path)
+    cfg = cfg_mgr.get_config()
+    web_cfg = cfg.get("web", {})
+    session_timeout_sec = int(web_cfg.get("session_timeout_sec", 1800))
+
+    # Session beállítások
     app.config["SECRET_KEY"] = "change-this-secret"
     app.config["SESSION_TYPE"] = "filesystem"
+    app.config["SESSION_PERMANENT"] = True
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=session_timeout_sec)
+
     Session(app)
 
     # Globális state
