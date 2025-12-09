@@ -1,5 +1,7 @@
 let mapConfig = null;
 let anchors = [];
+let tagsMeta = [];
+let selectedTag = null;
 
 async function loadMapConfig() {
     const resp = await fetch('/api/tdoa/map');
@@ -103,18 +105,41 @@ async function drawMap() {
     // kiválasztott TAG
     if (selectedTag) {
         const pos = await fetchPosition(selectedTag);
+
+        const infoId = document.getElementById('tag-info-id');
+        const infoPos = document.getElementById('tag-info-pos');
+        const infoUpdated = document.getElementById('tag-info-updated');
+
         if (pos && pos.x !== undefined) {
+            // pont kirajzolása
             const p = worldToCanvas(pos.x, pos.y, canvas);
             ctx.fillStyle = '#4caf50';
             ctx.beginPath();
             ctx.arc(p.x, p.y, 6, 0, 2 * Math.PI);
             ctx.fill();
             ctx.fillText(selectedTag, p.x + 8, p.y - 8);
+
+            // infó panel frissítése
+            infoId.textContent = selectedTag;
+            const xStr = pos.x.toFixed(2);
+            const yStr = pos.y.toFixed(2);
+            const zStr = (pos.z ?? 0).toFixed(2);
+            infoPos.textContent = `x=${xStr}, y=${yStr}, z=${zStr}`;
+            if (pos.time) {
+                const d = new Date(pos.time * 1000);
+                infoUpdated.textContent = d.toLocaleTimeString();
+            } else {
+                infoUpdated.textContent = '–';
+            }
+        } else {
+            // nincs pozíció ehhez a TAG-hez
+            infoId.textContent = selectedTag;
+            infoPos.textContent = '–';
+            infoUpdated.textContent = '–';
         }
     }
 
-    // ha később több TAG-et is rajzolnál, itt tudod bővíteni,
-    // a pos.x/pos.y-t mindig worldToCanvas-on keresztül vidd át
+    // ha később több TAG-et is rajzolnál...
 }
 
 document.getElementById('tag-select').addEventListener('change', (e) => {
